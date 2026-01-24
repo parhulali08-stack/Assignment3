@@ -13,7 +13,7 @@ public class BookRepository {
     private static int nextAuthorId = 3;
 
     static {
-        // Начальные данные
+        
         authors.add(new Author(1, "Абай Құнанбаев", "Қазақстан"));
         authors.add(new Author(2, "Мұхтар Әуезов", "Қазақстан"));
 
@@ -27,7 +27,7 @@ public class BookRepository {
         books.add(book2);
     }
 
-    // BOOK METHODS
+   
     public int create(Book book) {
         book.setId(nextBookId++);
         books.add(book);
@@ -46,5 +46,5 @@ public class BookRepository {
                 .orElse(null);
     }
 
-    // ... остальные методы (update, delete, existsByIsbn)
+   
 }
