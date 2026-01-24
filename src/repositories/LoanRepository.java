@@ -8,7 +8,7 @@ import java.util.*;
 
 public class LoanRepository {
 
-    // CREATE
+    
     public int create(Loan loan) throws DatabaseOperationException {
         String sql = "INSERT INTO loans (book_id, borrower_name, loan_date, return_date) VALUES (?, ?, ?, ?)";
 
@@ -37,7 +37,7 @@ public class LoanRepository {
         }
     }
 
-    // READ ALL
+    
     public List<Loan> getAll() throws DatabaseOperationException {
         List<Loan> loans = new ArrayList<>();
         String sql = "SELECT * FROM loans ORDER BY id";
@@ -62,7 +62,7 @@ public class LoanRepository {
         return loans;
     }
 
-    // READ BY ID
+    
     public Loan getById(int id) throws DatabaseOperationException {
         String sql = "SELECT * FROM loans WHERE id = ?";
 
@@ -87,7 +87,7 @@ public class LoanRepository {
         }
     }
 
-    // UPDATE
+    
     public boolean update(int id, Loan loan) throws DatabaseOperationException {
         String sql = "UPDATE loans SET book_id = ?, borrower_name = ?, loan_date = ?, return_date = ? WHERE id = ?";
 
@@ -109,7 +109,7 @@ public class LoanRepository {
         }
     }
 
-    // DELETE
+    
     public boolean delete(int id) throws DatabaseOperationException {
         String sql = "DELETE FROM loans WHERE id = ?";
 
@@ -125,7 +125,7 @@ public class LoanRepository {
         }
     }
 
-    // GET LOANS BY BOOK ID
+   
     public List<Loan> getByBookId(int bookId) throws DatabaseOperationException {
         List<Loan> loans = new ArrayList<>();
         String sql = "SELECT * FROM loans WHERE book_id = ? ORDER BY loan_date DESC";
@@ -152,7 +152,7 @@ public class LoanRepository {
         return loans;
     }
 
-    // GET ACTIVE LOANS (не возвращенные)
+   
     public List<Loan> getActiveLoans() throws DatabaseOperationException {
         List<Loan> loans = new ArrayList<>();
         String sql = "SELECT * FROM loans WHERE return_date IS NULL ORDER BY loan_date";
