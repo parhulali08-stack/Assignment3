@@ -8,7 +8,7 @@ public class Book extends BaseEntity implements Validatable, Displayable {
     private String isbn;
     private boolean available;
 
-    // Композиция (требование)
+   
     private Author author;
 
     public Book(int id, String title, int authorId, int year, String isbn, boolean available) {
@@ -30,17 +30,17 @@ public class Book extends BaseEntity implements Validatable, Displayable {
                 && year > 0;
     }
 
-    // Интерфейс Validatable
+    
     @Override
     public boolean validate() { return isValid(); }
 
-    // Интерфейс Displayable
+    
     @Override
     public void display() {
         System.out.println("📖 " + getDescription());
     }
 
-    // Геттеры/сеттеры...
+    
     public int getAuthorId() { return authorId; }
     public void setAuthorId(int authorId) { this.authorId = authorId; }
     public int getYear() { return year; }
