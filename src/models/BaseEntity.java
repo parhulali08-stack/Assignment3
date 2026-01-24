@@ -9,16 +9,16 @@ public abstract class BaseEntity {
         this.name = name;
     }
 
-    // 2 абстрактных метода (требование)
+    
     public abstract String getDescription();
     public abstract boolean isValid();
 
-    // 1 конкретный метод (требование)
+    
     public String getFullInfo() {
         return "ID: " + id + " | Название: " + name;
     }
 
-    // Геттеры/сеттеры
+    
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
     public String getName() { return name; }
