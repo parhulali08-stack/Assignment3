@@ -12,7 +12,7 @@ public class Main {
             System.err.println("❌ Критическая ошибка: " + e.getMessage());
             e.printStackTrace();
         } finally {
-            // Закрыть БД при выходе
+           
             DatabaseConnection.shutdown();
         }
     }
