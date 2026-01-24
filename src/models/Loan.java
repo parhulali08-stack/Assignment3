@@ -9,7 +9,7 @@ public class Loan {
     private LocalDate loanDate;
     private LocalDate returnDate;
 
-    // Композиция: Loan → Book (требование)
+    
     private Book book;
 
     public Loan(int id, int bookId, String borrowerName,
@@ -21,7 +21,7 @@ public class Loan {
         this.returnDate = returnDate;
     }
 
-    // Геттеры/сеттеры
+   
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
 
