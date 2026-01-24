@@ -1,9 +1,6 @@
 package database;
 
-/**
- * Имитация подключения к БД через коллекции в памяти
- * Для Assignment 3 достаточно, чтобы показать архитектуру
- */
+
 public class DatabaseConnection {
 
     public static String getConnectionInfo() {
