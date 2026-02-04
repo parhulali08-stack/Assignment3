@@ -2,46 +2,66 @@ package models;
 
 import java.time.LocalDate;
 
-public class Loan {
-    private int id;
-    private int bookId;
+public class Loan extends BaseEntity {
+    private Book book;
     private String borrowerName;
     private LocalDate loanDate;
     private LocalDate returnDate;
-
     
-    private Book book;
-
-    public Loan(int id, int bookId, String borrowerName,
-                LocalDate loanDate, LocalDate returnDate) {
-        this.id = id;
-        this.bookId = bookId;
+    public Loan(int id, String name, Book book, String borrowerName, LocalDate loanDate) {
+        super(id, name);
+        this.book = book;
         this.borrowerName = borrowerName;
         this.loanDate = loanDate;
-        this.returnDate = returnDate;
+        this.returnDate = null;
     }
-
-   
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
-
-    public int getBookId() { return bookId; }
-    public void setBookId(int bookId) { this.bookId = bookId; }
-
-    public String getBorrowerName() { return borrowerName; }
+    
+    @Override
+    public String getDescription() {
+        return book.getName() + " borrowed by " + borrowerName + " on " + loanDate;
+    }
+    
+    @Override
+    public boolean isValid() {
+        return book != null && 
+               borrowerName != null && 
+               !borrowerName.trim().isEmpty() &&
+               loanDate != null;
+    }
+    
+    public Book getBook() {
+        return book;
+    }
+    
+    public void setBook(Book book) {
+        this.book = book;
+    }
+    
+    public String getBorrowerName() {
+        return borrowerName;
+    }
+    
     public void setBorrowerName(String borrowerName) {
-        if (borrowerName == null || borrowerName.trim().isEmpty()) {
-            throw new IllegalArgumentException("Имя заемщика не может быть пустым!");
-        }
         this.borrowerName = borrowerName;
     }
-
-    public LocalDate getLoanDate() { return loanDate; }
-    public void setLoanDate(LocalDate loanDate) { this.loanDate = loanDate; }
-
-    public LocalDate getReturnDate() { return returnDate; }
-    public void setReturnDate(LocalDate returnDate) { this.returnDate = returnDate; }
-
-    public Book getBook() { return book; }
-    public void setBook(Book book) { this.book = book; }
+    
+    public LocalDate getLoanDate() {
+        return loanDate;
+    }
+    
+    public void setLoanDate(LocalDate loanDate) {
+        this.loanDate = loanDate;
+    }
+    
+    public LocalDate getReturnDate() {
+        return returnDate;
+    }
+    
+    public void setReturnDate(LocalDate returnDate) {
+        this.returnDate = returnDate;
+    }
+    
+    public boolean isReturned() {
+        return returnDate != null;
+    }
 }
