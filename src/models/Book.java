@@ -1,54 +1,48 @@
 package models;
 
-import interfaces.*;
-
-public class Book extends BaseEntity implements Validatable, Displayable {
-    private int authorId;
-    private int year;
+public class Book extends BaseEntity {
     private String isbn;
-    private boolean available;
-
-   
     private Author author;
-
-    public Book(int id, String title, int authorId, int year, String isbn, boolean available) {
-        super(id, title);
-        this.authorId = authorId;
-        this.year = year;
+    private int year;
+    
+    public Book(int id, String name, String isbn, Author author, int year) {
+        super(id, name);
         this.isbn = isbn;
-        this.available = available;
+        this.author = author;
+        this.year = year;
     }
-
+    
     @Override
     public String getDescription() {
-        return "Книга: " + getName() + " (" + year + ")";
+        return getName() + " by " + author.getName() + " (" + year + ")";
     }
-
+    
     @Override
     public boolean isValid() {
-        return getName() != null && !getName().trim().isEmpty()
-                && year > 0;
+        return isbn != null && isbn.length() == 13 && year > 1900;
     }
-
     
-    @Override
-    public boolean validate() { return isValid(); }
-
-    
-    @Override
-    public void display() {
-        System.out.println("📖 " + getDescription());
+    public String getIsbn() {
+        return isbn;
     }
-
     
-    public int getAuthorId() { return authorId; }
-    public void setAuthorId(int authorId) { this.authorId = authorId; }
-    public int getYear() { return year; }
-    public void setYear(int year) { this.year = year; }
-    public String getIsbn() { return isbn; }
-    public void setIsbn(String isbn) { this.isbn = isbn; }
-    public boolean isAvailable() { return available; }
-    public void setAvailable(boolean available) { this.available = available; }
-    public Author getAuthor() { return author; }
-    public void setAuthor(Author author) { this.author = author; }
+    public void setIsbn(String isbn) {
+        this.isbn = isbn;
+    }
+    
+    public Author getAuthor() {
+        return author;
+    }
+    
+    public void setAuthor(Author author) {
+        this.author = author;
+    }
+    
+    public int getYear() {
+        return year;
+    }
+    
+    public void setYear(int year) {
+        this.year = year;
+    }
 }
