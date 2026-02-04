@@ -1,52 +1,44 @@
 package services;
 
 import models.Author;
-import repositories.AuthorRepository;
-import exceptions.*;
-
+import repositories.CrudRepository;
+import exceptions.InvalidInputException;
+import exceptions.DuplicateResourceException;
 import java.util.List;
 
 public class AuthorService {
-    private AuthorRepository authorRepository = new AuthorRepository();
-
-    // CREATE
-    public void createAuthor(Author author) throws InvalidInputException,
-            DatabaseOperationException {
-
-        if (author == null) {
-            throw new InvalidInputException("Автор не может быть null");
-        }
-
-        if (!author.isValid()) {
-            throw new InvalidInputException("Данные автора невалидны");
-        }
-
-        int newId = authorRepository.create(author);
-        if (newId > 0) {
-            author.setId(newId);
-        }
+    private final CrudRepository<Author> authorRepository;
+    
+    public AuthorService(CrudRepository<Author> authorRepository) {
+        this.authorRepository = authorRepository;
     }
-
-    // READ ALL
-    public List<Author> getAllAuthors() throws DatabaseOperationException {
-        return authorRepository.getAll();
-    }
-
-    // READ BY ID
-    public Author getAuthorById(int id) throws ResourceNotFoundException,
-            DatabaseOperationException {
-        Author author = authorRepository.getById(id);
-        if (author == null) {
-            throw new ResourceNotFoundException("Автор с ID=" + id + " не найден");
+    
+    public Author createAuthor(String name, String country) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new InvalidInputException("Author name cannot be empty");
         }
-        return author;
-    }
-
-    // ПОЛИМОРФИЗМ: метод для BaseEntity
-    public void printEntityInfo(Author author) {
-        if (author != null) {
-            System.out.println("📝 " + author.getFullInfo());
-            System.out.println("   " + author.getDescription());
+        
+        List<Author> existingAuthors = authorRepository.findByCondition(a -> 
+            a.getName().equalsIgnoreCase(name));
+        
+        if (!existingAuthors.isEmpty()) {
+            throw new DuplicateResourceException("Author '" + name + "' already exists");
         }
+        
+        Author author = new Author(0, name, country);
+        return authorRepository.save(author);
+    }
+    
+    public List<Author> getAllAuthors() {
+        return authorRepository.findAll();
+    }
+    
+    public List<Author> searchAuthorsByName(String keyword) {
+        return authorRepository.findByCondition(a -> 
+            a.getName().toLowerCase().contains(keyword.toLowerCase()));
+    }
+    
+    public void deleteAuthor(int id) {
+        authorRepository.delete(id);
     }
 }
