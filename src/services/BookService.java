@@ -1,102 +1,71 @@
 package services;
 
 import models.Book;
-import repositories.BookRepository;
-import exceptions.*;
-
+import models.Author;
+import interfaces.Validatable;
+import repositories.CrudRepository;
+import exceptions.InvalidInputException;
+import exceptions.DuplicateResourceException;
 import java.util.List;
+import java.util.Comparator;
 
-public class BookService {
-    private BookRepository bookRepository = new BookRepository();
-
-    // CREATE с валидацией
-    public void createBook(Book book) throws InvalidInputException,
-            DuplicateResourceException,
-            DatabaseOperationException {
-
-        // 1. Валидация (требование)
-        if (book == null) {
-            throw new InvalidInputException("Книга не может быть null");
-        }
-
-        if (!book.isValid()) {
-            throw new InvalidInputException("Данные книги невалидны");
-        }
-
-        // 2. Бизнес-логика: ISBN должен быть уникальным
-        if (bookRepository.existsByIsbn(book.getIsbn())) {
-            throw new DuplicateResourceException("ISBN " + book.getIsbn() + " уже существует");
-        }
-
-        // 3. Бизнес-логика: год издания не может быть в будущем
-        int currentYear = java.time.Year.now().getValue();
-        if (book.getYear() > currentYear) {
-            throw new InvalidInputException("Год издания не может быть больше " + currentYear);
-        }
-
-        // 4. Сохранить в БД
-        int newId = bookRepository.create(book);
-        if (newId > 0) {
-            book.setId(newId);
-        }
+public class BookService implements Validatable<Book> {
+    private final CrudRepository<Book> bookRepository;
+    private final CrudRepository<Author> authorRepository;
+    
+    public BookService(CrudRepository<Book> bookRepository, CrudRepository<Author> authorRepository) {
+        this.bookRepository = bookRepository;
+        this.authorRepository = authorRepository;
     }
-
-    // READ ALL
-    public List<Book> getAllBooks() throws DatabaseOperationException {
-        return bookRepository.getAll();
+    
+    @Override
+    public boolean validate(Book book) {
+        return book.isValid();
     }
-
-    // READ BY ID
-    public Book getBookById(int id) throws ResourceNotFoundException,
-            DatabaseOperationException {
-        Book book = bookRepository.getById(id);
-        if (book == null) {
-            throw new ResourceNotFoundException("Книга с ID=" + id + " не найдена");
+    
+    public Book addBook(String name, String isbn, int authorId, int year) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new InvalidInputException("Book name cannot be empty");
         }
-        return book;
+        
+        if (isbn == null || isbn.length() != 13) {
+            throw new InvalidInputException("ISBN must be 13 characters");
+        }
+        
+        var authorOpt = authorRepository.findById(authorId);
+        if (authorOpt.isEmpty()) {
+            throw new InvalidInputException("Author not found with id: " + authorId);
+        }
+        
+        List<Book> existingBooks = bookRepository.findByCondition(b -> 
+            b.getIsbn().equals(isbn));
+        
+        if (!existingBooks.isEmpty()) {
+            throw new DuplicateResourceException("Book with ISBN '" + isbn + "' already exists");
+        }
+        
+        Book book = new Book(0, name, isbn, authorOpt.get(), year);
+        
+        if (!validate(book)) {
+            throw new InvalidInputException("Book validation failed");
+        }
+        
+        return bookRepository.save(book);
     }
-
-    // UPDATE
-    public void updateBook(int id, Book book) throws InvalidInputException,
-            ResourceNotFoundException,
-            DatabaseOperationException {
-        // 1. Проверить существование
-        if (bookRepository.getById(id) == null) {
-            throw new ResourceNotFoundException("Книга с ID=" + id + " не найдена");
-        }
-
-        // 2. Валидация
-        if (!book.isValid()) {
-            throw new InvalidInputException("Данные книги невалидны");
-        }
-
-        // 3. Обновить
-        boolean updated = bookRepository.update(id, book);
-        if (!updated) {
-            throw new DatabaseOperationException("Не удалось обновить книгу");
-        }
+    
+    public List<Book> getAllBooksSortedByName() {
+        List<Book> books = bookRepository.findAll();
+        books.sort(Comparator.comparing(Book::getName));
+        return books;
     }
-
-    // DELETE
-    public void deleteBook(int id) throws ResourceNotFoundException,
-            DatabaseOperationException {
-        // 1. Проверить существование
-        if (bookRepository.getById(id) == null) {
-            throw new ResourceNotFoundException("Книга с ID=" + id + " не найдена");
-        }
-
-        // 2. Удалить
-        boolean deleted = bookRepository.delete(id);
-        if (!deleted) {
-            throw new DatabaseOperationException("Не удалось удалить книгу");
-        }
+    
+    public List<Book> getBooksByAuthor(int authorId) {
+        return bookRepository.findByCondition(b -> b.getAuthor().getId() == authorId);
     }
-
-    // ПОЛИМОРФИЗМ пример: метод принимает BaseEntity
-    public void displayEntityInfo(Book book) {
-        if (book != null) {
-            System.out.println(book.getFullInfo());  // метод из BaseEntity
-            book.display();  // метод из интерфейса Displayable
-        }
+    
+    public List<Book> searchBooks(String keyword) {
+        return bookRepository.findByCondition(b -> 
+            b.getName().toLowerCase().contains(keyword.toLowerCase()) ||
+            b.getAuthor().getName().toLowerCase().contains(keyword.toLowerCase()));
     }
 }
