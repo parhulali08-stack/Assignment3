@@ -2,90 +2,65 @@ package services;
 
 import models.Loan;
 import models.Book;
-import repositories.LoanRepository;
-import repositories.BookRepository;
-import exceptions.*;
-
+import repositories.CrudRepository;
+import exceptions.InvalidInputException;
+import exceptions.ResourceNotFoundException;
 import java.time.LocalDate;
 import java.util.List;
 
 public class LoanService {
-    private LoanRepository loanRepository = new LoanRepository();
-    private BookRepository bookRepository = new BookRepository();
-
-    // CREATE выдачи книги
-    public void createLoan(Loan loan) throws InvalidInputException,
-            ResourceNotFoundException,
-            DatabaseOperationException {
-
-        if (loan == null) {
-            throw new InvalidInputException("Выдача не может быть null");
-        }
-
-        if (loan.getBorrowerName() == null || loan.getBorrowerName().trim().isEmpty()) {
-            throw new InvalidInputException("Имя заемщика обязательно");
-        }
-
-        // Проверить существование книги
-        Book book = bookRepository.getById(loan.getBookId());
-        if (book == null) {
-            throw new ResourceNotFoundException("Книга с ID=" + loan.getBookId() + " не найдена");
-        }
-
-        // Проверить доступность книги
-        if (!book.isAvailable()) {
-            throw new InvalidInputException("Книга уже выдана");
-        }
-
-        // Бизнес-логика: дата выдачи не может быть в будущем
-        if (loan.getLoanDate().isAfter(LocalDate.now())) {
-            throw new InvalidInputException("Дата выдачи не может быть в будущем");
-        }
-
-        // Создать выдачу
-        int newId = loanRepository.create(loan);
-        if (newId > 0) {
-            loan.setId(newId);
-
-            // Обновить статус книги
-            book.setAvailable(false);
-            bookRepository.update(book.getId(), book);
-        }
+    private final CrudRepository<Loan> loanRepository;
+    private final CrudRepository<Book> bookRepository;
+    
+    public LoanService(CrudRepository<Loan> loanRepository, CrudRepository<Book> bookRepository) {
+        this.loanRepository = loanRepository;
+        this.bookRepository = bookRepository;
     }
-
-    // Возврат книги
-    public void returnBook(int loanId) throws InvalidInputException,
-            ResourceNotFoundException,
-            DatabaseOperationException {
-
-        Loan loan = loanRepository.getById(loanId);
-        if (loan == null) {
-            throw new ResourceNotFoundException("Выдача с ID=" + loanId + " не найдена");
+    
+    public Loan borrowBook(int bookId, String borrowerName) {
+        var bookOpt = bookRepository.findById(bookId);
+        if (bookOpt.isEmpty()) {
+            throw new ResourceNotFoundException("Book not found with id: " + bookId);
         }
-
-        if (loan.getReturnDate() != null) {
-            throw new InvalidInputException("Книга уже возвращена");
+        
+        List<Loan> activeLoans = loanRepository.findByCondition(l -> 
+            l.getBook().getId() == bookId && l.getReturnDate() == null);
+        
+        if (!activeLoans.isEmpty()) {
+            throw new InvalidInputException("Book is already borrowed");
         }
-
-        // Установить дату возврата
+        
+        Loan loan = new Loan(0, "Loan for " + bookOpt.get().getName(), 
+                            bookOpt.get(), borrowerName, LocalDate.now());
+        
+        if (!loan.isValid()) {
+            throw new InvalidInputException("Invalid loan data");
+        }
+        
+        return loanRepository.save(loan);
+    }
+    
+    public void returnBook(int loanId) {
+        var loanOpt = loanRepository.findById(loanId);
+        if (loanOpt.isEmpty()) {
+            throw new ResourceNotFoundException("Loan not found with id: " + loanId);
+        }
+        
+        Loan loan = loanOpt.get();
+        if (loan.isReturned()) {
+            throw new InvalidInputException("Book already returned");
+        }
+        
         loan.setReturnDate(LocalDate.now());
-        loanRepository.update(loanId, loan);
-
-        // Обновить статус книги
-        Book book = bookRepository.getById(loan.getBookId());
-        if (book != null) {
-            book.setAvailable(true);
-            bookRepository.update(book.getId(), book);
-        }
+        loanRepository.update(loan);
     }
-
-    // READ ALL
-    public List<Loan> getAllLoans() throws DatabaseOperationException {
-        return loanRepository.getAll();
+    
+    public List<Loan> getActiveLoans() {
+        return loanRepository.findByCondition(l -> l.getReturnDate() == null);
     }
-
-    // GET ACTIVE LOANS
-    public List<Loan> getActiveLoans() throws DatabaseOperationException {
-        return loanRepository.getActiveLoans();
+    
+    public List<Loan> getLoansByBorrower(String borrowerName) {
+        return loanRepository.findByCondition(l -> 
+            l.getBorrowerName().equalsIgnoreCase(borrowerName));
     }
 }
