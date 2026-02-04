@@ -1,16 +1,38 @@
 package database;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 
 public class DatabaseConnection {
-
-    public static String getConnectionInfo() {
-        return "✅ Используется хранение данных в памяти (коллекции)";
+    private static final String URL = "jdbc:postgresql://localhost:5432/library_db";
+    private static final String USER = "postgres";
+    private static final String PASSWORD = "password";
+    private static Connection connection;
+    
+    private DatabaseConnection() {}
+    
+    public static Connection getConnection() {
+        if (connection == null) {
+            try {
+                connection = DriverManager.getConnection(URL, USER, PASSWORD);
+                System.out.println("Database connection established");
+            } catch (SQLException e) {
+                throw new RuntimeException("Failed to connect to database", e);
+            }
+        }
+        return connection;
     }
-
-    public static void initialize() {
-        System.out.println("📊 База данных инициализирована в памяти");
-        System.out.println("   - Авторы: ArrayList<Author>");
-        System.out.println("   - Книги: ArrayList<Book>");
-        System.out.println("   - Выдачи: ArrayList<Loan>");
+    
+    public static void closeConnection() {
+        if (connection != null) {
+            try {
+                connection.close();
+                connection = null;
+                System.out.println("Database connection closed");
+            } catch (SQLException e) {
+                System.err.println("Error closing connection: " + e.getMessage());
+            }
+        }
     }
 }
